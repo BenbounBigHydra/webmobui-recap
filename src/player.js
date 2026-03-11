@@ -10,8 +10,10 @@ const playSong = (song, songs) => {
     currentSongList = songs
   }
 
+  console.log(currentSong);
   // On donne l'url au player et démarre la lecture
-  
+  audioPlayer.src = currentSong.audio_url;
+  audioPlayer.play();
 }
 
 // Lis la chanson suivante, d'après la chanson en cours

@@ -1,37 +1,56 @@
-import { getSongs } from '../api.js'
+import { getFavorite, toggleFavorite } from "../local-storage.js";
+import { playSong } from "../player.js";
 
-customElements.define("page-artist-songs", class extends HTMLElement {
-  static observedAttributes = []
+export class PageSong extends HTMLElement {
+  static observedAttributes = [];
+  songs = [];
 
   connectedCallback() {
-    this.render()
+    this.render();
   }
 
   attributeChangedCallback() {
-    this.render()
+    this.render();
   }
 
   render() {
-    const artistId = this.getAttribute('artist-id')
-
-    getSongs(artistId)
-    .then((songs) => {
+    this.getSongsData().then((songs) => {
+      this.songs = songs;
       this.innerHTML = `
         <h4>
-          Artistes > ${songs[0].artist.name}
+          ${this.getTitle()}
         </h4>
 
         <div class="list">
         </div>
-      `
-      const songList = this.querySelector('.list')
+      `;
+      const songList = this.querySelector(".list");
       // Itérer le tableau de chansons reçu et créer les éléments correspondants
       songs.forEach((song) => {
-        const songItem = document.createElement('song-item')
-        songItem.setAttribute('title', song.title)
-        songItem.addEventListener()
-        songList.append(songItem)
-      })
-    })
+        const songItem = document.createElement("song-item");
+        songItem.setAttribute("title", song.title);
+        songItem.setAttribute(
+          "favorite",
+          getFavorite(song.id) ? "true" : "false",
+        );
+        songItem.addEventListener("playsong", () => playSong(song, songs));
+        songItem.addEventListener("favoritesong", () => {
+          toggleFavorite(song);
+          songItem.setAttribute(
+            "favorite",
+            getFavorite(song.id) ? "true" : "false",
+          );
+        });
+        songList.append(songItem);
+      });
+    });
   }
-})
+
+  async getSongsData() {
+    return [];
+  }
+
+  getTitle() {
+    return "title";
+  }
+}

@@ -1,14 +1,21 @@
-import { audioPlayer, playSong, currentSong, playNextSong, playPreviousSong } from '../player.js'
-import formatTimestamp from '../lib/formatTimestamp.js'
+import {
+  audioPlayer,
+  playSong,
+  currentSong,
+  playNextSong,
+  playPreviousSong,
+} from "../player.js";
+import formatTimestamp from "../lib/formatTimestamp.js";
 
-customElements.define("page-player", class extends HTMLElement {
+customElements.define(
+  "page-player",
+  class extends HTMLElement {
+    connectedCallback() {
+      this.render();
+    }
 
-  connectedCallback() {
-    this.render();
-  }
-
-  render() {
-    this.innerHTML = `
+    render() {
+      this.innerHTML = `
       <div id="player">
         <div id="player-thumbnail">
           <!-- utiliser l'id de cet élément pour changer la cover de la chanson -->
@@ -58,75 +65,89 @@ customElements.define("page-player", class extends HTMLElement {
           </div>
         </div>
       </div>
-      `
+      `;
 
-    this.selectElements();
-    this.addEventListeners();
-    this.updatePlayerInfos();
-  }
+      this.selectElements();
+      this.addEventListeners();
+      this.updatePlayerInfos();
+    }
 
-  // sélection des éléments HTML
-  selectElements() {
-    // infos de la chanson
-    this.songImage = this.querySelector('#player-thumbnail-image');
-    this.songTitle = this.querySelector('#player-infos-song-title');
-    this.songArtist = this.querySelector('#player-infos-artist-name');
+    // sélection des éléments HTML
+    selectElements() {
+      // infos de la chanson
+      this.songImage = this.querySelector("#player-thumbnail-image");
+      this.songTitle = this.querySelector("#player-infos-song-title");
+      this.songArtist = this.querySelector("#player-infos-artist-name");
 
-    // boutons principaux
-    this.playButton = this.querySelector('#player-control-play');
-    this.nextButton = this.querySelector('#player-control-next');
-    this.prevButton = this.querySelector('#player-control-previous');
+      // boutons principaux
+      this.playButton = this.querySelector("#player-control-play");
+      this.nextButton = this.querySelector("#player-control-next");
+      this.prevButton = this.querySelector("#player-control-previous");
 
-    // progress bar et affichage du temps
-    this.progressBar = this.querySelector('#player-progress-bar');
-    this.timeCurrent = this.querySelector('#player-time-current');
-    this.timeDuration = this.querySelector('#player-time-duration');
-  }
+      // progress bar et affichage du temps
+      this.progressBar = this.querySelector("#player-progress-bar");
+      this.timeCurrent = this.querySelector("#player-time-current");
+      this.timeDuration = this.querySelector("#player-time-duration");
+    }
 
-  // ajoute les eventListeners
-  addEventListeners() {
-    this.updatePlayerInfos = this.updatePlayerInfos.bind(this);
-    this.updateCurrentTime = this.updateCurrentTime.bind(this);
-    this.updatePlayButton = this.updatePlayButton.bind(this);
+    // ajoute les eventListeners
+    addEventListeners() {
+      this.updatePlayerInfos = this.updatePlayerInfos.bind(this);
+      this.updateCurrentTime = this.updateCurrentTime.bind(this);
+      this.updatePlayButton = this.updatePlayButton.bind(this);
 
-    // Change les infos quand une nouvelle chanson est chargée
+      // Change les infos quand une nouvelle chanson est chargée
+      audioPlayer.addEventListener("loadeddata", this.updatePlayerInfos);
 
+      // Change l'affichage du bouton play
+      audioPlayer.addEventListener('play', this.updatePlayButton);
+      audioPlayer.addEventListener('pause', this.updatePlayButton);
 
-    // Change l'affichage du bouton play
-    
+      // Change l'affichage du temps écoulé
+      audioPlayer.addEventListener('timeupdate', this.updateCurrentTime);
 
-    // Change l'affichage du temps écoulé
-    
+      // Interaction avec les boutons principaux
+      this.playButton.addEventListener(
+        'click',() =>{
+          if(!currentSong) return
+        audioPlayer.paused ? audioPlayer.play() : audioPlayer.pause()}
+      );
+      this.nextButton.addEventListener('click', playNextSong);
+      this.prevButton.addEventListener('click', playPreviousSong);
 
-    // Interaction avec les boutons principaux
-    
+      // Interaction avec la progress bar
+      this.progressBar.addEventListener('change', () => {
+        audioPlayer.currentTime = this.progressBar.value;
+      })
+    }
 
-    // Interaction avec la progress bar
-    
+    // Mise à jour des différentes infos de la plage player d'après la chanson en cours
+    updatePlayerInfos() {
+      if (!currentSong) return;
+      // infos de la chanson
+      this.songImage.src = currentSong.artist.image_url;
+      this.songTitle.textContent = currentSong.title;
+      this.songArtist.textContent = currentSong.artist.name;
 
-  }
+      // durée de la chanson
+      this.timeDuration.textContent = formatTimestamp(audioPlayer.duration);
+      this.progressBar.max = audioPlayer.duration;
 
-  // Mise à jour des différentes infos de la plage player d'après la chanson en cours
-  updatePlayerInfos() {
-    if (!currentSong) return
-    // infos de la chanson
-    
+      this.updatePlayButton();
+      this.updateCurrentTime();
+    }
 
-    // durée de la chanson
-    
+    // Mise à jour de l'affichage du temps écoulé
+    updateCurrentTime() {
+      this.timeCurrent.textContent = formatTimestamp(audioPlayer.currentTime);
+      this.progressBar.value = audioPlayer.currentTime;
+    }
 
-    this.updatePlayButton();
-    this.updateCurrentTime();
-    
-  }
-
-  // Mise à jour de l'affichage du temps écoulé
-  updateCurrentTime() {
-    
-  }
-
-  // Mise à jour de l'affichage du bouton play/pause
-  updatePlayButton() {
-    
-  }
-})
+    // Mise à jour de l'affichage du bouton play/pause
+    updatePlayButton() {
+      this.playButton.querySelector("span").textContent = audioPlayer.paused
+        ? "play_arrow"
+        : "pause";
+    }
+  },
+);

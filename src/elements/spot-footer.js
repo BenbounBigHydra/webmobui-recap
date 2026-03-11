@@ -21,7 +21,9 @@ customElements.define("spot-footer", class extends HTMLElement {
       </nav>
     `
 
+    // Bloque le fait que this fait référence à l'élément custom
     this.hashChange = this.hashChange.bind(this)
+    
     window.addEventListener("hashchange", this.hashChange)
 
     this.hashChange()
